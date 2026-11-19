@@ -1,3 +1,5 @@
+> **AI agent instructions (organization-wide):** Before working on code, issues, or pull requests, read and follow the [organization `AGENTS.md`](https://github.com/atto-lang/.github/blob/main/AGENTS.md), including its **merge-first stealth-development policy**. Honor any repository-local `AGENTS.md`, explicit holds, and GitHub-enforced rules.
+
 # atto-source.realtime
 
 Planned AttoLang real-time compiler/backend project. **Repository bootstrap only:** no compiler, runtime or real-time certification is implied by this README.
