@@ -1,0 +1,38 @@
+{
+  "schema": "atto.repository-capabilities.v1",
+  "repository": "atto-lang/atto-source.realtime",
+  "role": "compiler",
+  "source_state": "bootstrap_only",
+  "certification": "NOT_CERTIFIED",
+  "contract": "atto.hybrid-actor-memory.v1",
+  "reference_abi": {
+    "target": "offset8_plus_one",
+    "word_bits": 32,
+    "alignment": 8,
+    "max_logical_start_bytes": "34359738352",
+    "status": "NOT_IMPLEMENTED"
+  },
+  "implementation": {
+    "compiler": "NOT_IMPLEMENTED",
+    "aot": "NOT_IMPLEMENTED",
+    "runtime": "NOT_IMPLEMENTED",
+    "hard_realtime_prefault": "NOT_IMPLEMENTED",
+    "worst_case_execution_bound": "NOT_IMPLEMENTED",
+    "zero_gc": "NOT_IMPLEMENTED",
+    "actor_private_heap": "NOT_IMPLEMENTED",
+    "actor_generation_lease": "NOT_IMPLEMENTED",
+    "memory_growth_peak_charge": "NOT_IMPLEMENTED",
+    "actor_transfer_take": "NOT_IMPLEMENTED",
+    "frozen_share": "NOT_IMPLEMENTED",
+    "compiled_node_graph_positive": "NOT_EXECUTED",
+    "compiled_node_graph_negative": "NOT_EXECUTED"
+  },
+  "canonical_guest_fixtures": {
+    "repo": "atto-lang/atto-platform-conformance",
+    "pr": 461,
+    "positive_sha": "d472cccb3da24ee8f9fed44f99c1c7742d3240de",
+    "negative_sha": "7544665f302167451fdc47ce11f5f108f703b7ed"
+  },
+  "admission_rule": "No compiler artifact, no guest support. Hard-RT claims require native exact-head memory, deadline and no-page-fault measurements.",
+  "evidence": []
+}
