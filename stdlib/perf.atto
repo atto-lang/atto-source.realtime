@@ -21,6 +21,7 @@ define module Perf as
     if sample_key < 0 || every_n < 1 || every_n > 65536; do
       return false;
     fi
-    return (sample_key % every_n) == 0;
+    // Guarded integer division avoids the reserved '%' Atto source token.
+    return (sample_key / every_n) * every_n == sample_key;
   }
 end
