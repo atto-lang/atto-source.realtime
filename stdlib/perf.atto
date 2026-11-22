@@ -1,0 +1,26 @@
+// Realtime compiler-owned perf policy candidate: pure clock input, no
+// implicit host calls, allocator, blocking operation, JIT or telemetry thread.
+// Caller provides a validated nonnegative monotonic timestamp in nanoseconds.
+define module Perf as
+  pub fnc begin_ns(bool enabled, int now_ns) -> int {
+    if !enabled || now_ns <= 0; do
+      return 0;
+    fi
+    return now_ns;
+  }
+
+  // Explicit timestamps allow a pre-certified fixed-cost clock adapter.
+  pub fnc duration_ns(int started_ns, int finished_ns) -> int {
+    if started_ns <= 0 || finished_ns < started_ns; do
+      return 0;
+    fi
+    return finished_ns - started_ns;
+  }
+
+  pub fnc should_sample(int sample_key, int every_n) -> bool {
+    if sample_key < 0 || every_n < 1 || every_n > 65536; do
+      return false;
+    fi
+    return (sample_key % every_n) == 0;
+  }
+end
