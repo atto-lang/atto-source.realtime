@@ -6,7 +6,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PINS = {
   "math": "025410931c8d2bd03d042036b2d3fa1006a5d8ee",
   "hash": "6ebafd999f44920a628020662a8b5163e576a119",
-  "cell": "633a54fe4adacbc9f86b046fe2e3c2d19fd4954b"
+  "cell": "8745aba9c4d5a37d58b0980a79e008b38562cda2"
 }
 P = 1000000007
 
