@@ -37,6 +37,9 @@ test('test assertion outcomes and integer bounds are nonthrowing', () => {
 });
 
 test('guest fixtures are present but not claimed as executed', () => {
+  const targetNegative = src('tests/fixtures/std-assert-v1/reject-hard-realtime.atto');
+  assert.ok(targetNegative.includes('NOT_EXECUTED'));
+  assert.ok(targetNegative.includes('TARGET_PROFILE_REJECTION'));
   const folder = 'tests/fixtures/std-assert-v1/';
   for (const name of ['pass', 'fail-unequal', 'reject-mixed-eq']) {
     assert.ok(src(folder + name + '.atto').includes('NOT_EXECUTED'));
