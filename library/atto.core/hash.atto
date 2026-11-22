@@ -1,0 +1,24 @@
+// Real-time backend-local noncryptographic octet fold. Constant 31 steps.
+// No unbounded loops, heap, system time, host hashing or signed i64 overflow.
+// This does NOT establish WCET/cycle budgets; target codegen is unimplemented.
+define module hash as
+  pub fnc initial_state(): int { return 17; }
+  pub fnc step_byte(int state, int octet): int {
+    if state < 0 || state >= 1000000007; do return -1; fi
+    if octet < 0 || octet > 255; do return -1; fi
+    let int next = state * 31 + octet;
+    for (let int i = 0; i < 31; i = i + 1) {
+      if next >= 1000000007; do next = next - 1000000007; fi
+    }
+    return next;
+  }
+  pub fnc two_bytes(int a, int b): int {
+    let int step = step_byte(initial_state(), a);
+    if step < 0; do return -1; fi
+    return step_byte(step, b);
+  }
+  pub fnc from_bool(bool value): int {
+    if value; do return step_byte(initial_state(), 1); fi
+    return step_byte(initial_state(), 0);
+  }
+end
