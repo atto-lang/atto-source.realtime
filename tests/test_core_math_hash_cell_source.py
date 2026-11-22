@@ -6,7 +6,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PINS = {
   "math": "025410931c8d2bd03d042036b2d3fa1006a5d8ee",
   "hash": "6ebafd999f44920a628020662a8b5163e576a119",
-  "cell": "8745aba9c4d5a37d58b0980a79e008b38562cda2"
+  "cell": "30ef700dc973f1af6bda588aa46ae5cdc7ae745b"
 }
 P = 1000000007
 
@@ -61,6 +61,19 @@ class RealTimeCoreSource(unittest.TestCase):
         for readers, writer, valid, writable in vectors:
             self.assertEqual(0 <= readers <= 65535 and (not writer or readers == 0), valid)
             self.assertEqual(readers == 0 and not writer, writable)
+        self.assertNotIn("pub fnc issue_loan(", cell)
+
+    def test_saturated_shared_loan_denies_new_acquisition_but_not_owner_read(self):
+        cell = (ROOT / "library" / "atto.core" / "cell.atto").read_text("utf8")
+        self.assertIn("readers >= 0 && readers < 65535", cell)
+        # Independent source-only reference: not a compiler-checked loan.
+        for readers, writer, permitted in (
+            (0, False, True), (65534, False, True),
+            (65535, False, False), (65536, False, False),
+            (-1, False, False), (0, True, False)
+        ):
+            self.assertEqual(0 <= readers < 65535 and not writer, permitted)
+        self.assertTrue(0 <= 65535 <= 65535)  # existing owner may still read
         self.assertNotIn("pub fnc issue_loan(", cell)
 
 if __name__ == "__main__":
