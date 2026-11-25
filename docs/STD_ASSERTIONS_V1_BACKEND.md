@@ -2,7 +2,7 @@
 
 **Status: SOURCE_ONLY / NOT_EXECUTED.** This is a backend-local implementation candidate, **not proof of compiler, AOT or runtime parity**.
 
-- `stdlib/std/assert.atto` follows [atto-spec#114](https://github.com/atto-lang/atto-spec/pull/114): a statically imported `std.assert` module, `true(bool)`, `false(bool)`, `equal<T: Eq>(expected, actual)`, `not_equal<T: Eq>(expected, actual)`, `fail(String)`. On failed condition, throw typed guest `AssertionError extends Error`; never process-abort or actor panic.
+- `stdlib/std/assert.atto` follows [atto-spec#114](https://github.com/atto-lang/atto-spec/pull/114): a statically imported `std.assert` module, `true(bool)`, `false(bool)`, `equal<T: Eq>(expected, actual)`, `not_equal<T: Eq>(expected, actual)`, `fail(String)`. On failed condition, use canonical `throw!` with typed guest `AssertionError extends Error`; never process-abort or actor panic.
 - `stdlib/std/test_assert.atto` provides an **independent** `TestOutcome(passed, message)` source candidate for a future backend-local `atto test` adapter; it returns values on failed checks. Its type must be integrated with the compiler's test runner; do not assume the Java test runner's type is present here.
 - `tests/fixtures/std-assert-v1/*.atto` are authored cases, not independently run tests; `tests/std_assert_source_contract.test.mjs` is a source-only lexical guard runnable with `node --test tests/std_assert_source_contract.test.mjs`. That gate does not compile Atto.
 - Expected-first/actual-second arguments evaluate once, left to right. `Eq` comparison must be statically checked with no type coercion, implicit truthiness, pointer equality, arbitrary stringification or evaluation duplication. Runtime calls cannot disappear under release, AOT or optimization.
@@ -10,7 +10,7 @@
 
 ## Backend-specific missing evidence
 
-The realtime compiler repository is still only a project skeleton. Heap-allocating AssertionError and dynamic throw may be incompatible with hard-real-time profiles; reject them deterministically until a bounded certified equivalent is specified. Hosted test profile and real-time target results must remain distinct.
+The realtime compiler repository is still only a project skeleton. Heap-allocating AssertionError and dynamic `throw!` may be incompatible with hard-real-time profiles; reject them deterministically until a bounded certified equivalent is specified. Hosted test profile and real-time target results must remain distinct.
 
 Required real evidence: compiler bind/typecheck of `pkg "std.assert"`, accepted qualified reserved-word members; typed and catchable guest failure; negative mixed-type rejection; success/failure with optimizations; full AOT target receipt if supported; actor/worker isolation of failures; exact current-head nonzero-step CI. Mark each missing result NOT_EXECUTED and do not merge until verified. No private cross-org CI mirroring absent independently approved export controls.
 

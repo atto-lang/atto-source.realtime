@@ -9,14 +9,14 @@ define module assert as
 
   pub fnc true(bool condition): void {
     if !condition; do
-      throw new AssertionError("assert.true: expected true");
+      throw! new AssertionError("assert.true: expected true");
     fi
     return;
   }
 
   pub fnc false(bool condition): void {
     if condition; do
-      throw new AssertionError("assert.false: expected false");
+      throw! new AssertionError("assert.false: expected false");
     fi
     return;
   }
@@ -25,19 +25,19 @@ define module assert as
   // Eq must be checked statically: never coerce numbers or compare addresses.
   pub fnc equal<T: Eq>(T expected, T actual): void {
     if !(expected eq actual); do
-      throw new AssertionError("assert.equal: values differ");
+      throw! new AssertionError("assert.equal: values differ");
     fi
     return;
   }
 
   pub fnc not_equal<T: Eq>(T expected, T actual): void {
     if expected eq actual; do
-      throw new AssertionError("assert.not_equal: values are equal");
+      throw! new AssertionError("assert.not_equal: values are equal");
     fi
     return;
   }
 
   pub fnc fail(String message): void {
-    throw new AssertionError(message);
+    throw! new AssertionError(message);
   }
 end
