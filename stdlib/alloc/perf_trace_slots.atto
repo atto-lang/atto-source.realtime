@@ -1,0 +1,23 @@
+// Realtime AttoLang alloc-free admission accounting for a caller-owned,
+// preallocated trace ring. Pure scalar policy only: NO buffer storage yet.
+// The compiler/runtime must supply a bounded arena and prove WCET separately.
+define pub module perf_trace_slots as
+  pub fnc valid_capacity(int capacity) -> bool {
+    return capacity >= 1 && capacity <= 65536;
+  }
+
+  pub fnc can_record(bool enabled, int occupied, int capacity) -> bool {
+    if !enabled || !valid_capacity(capacity); do
+      return false;
+    fi
+    return occupied >= 0 && occupied < capacity;
+  }
+
+  // Saturate dropped telemetry count without ever blocking or allocating.
+  pub fnc next_dropped(int dropped, bool should_drop) -> int {
+    if dropped < 0; do return 0; fi
+    if dropped >= 2147483647; do return 2147483647; fi
+    if !should_drop; do return dropped; fi
+    return dropped + 1;
+  }
+end
