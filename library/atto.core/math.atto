@@ -1,0 +1,21 @@
+// Real-time target freestanding Atto math candidate, checked signed i64.
+// No dynamic memory, host time, scheduler, OS, floating modes or panic paths.
+define pub module math as
+  pub fnc min_int(int a, int b): int {
+    if a < b; do return a; fi
+    return b;
+  }
+  pub fnc max_int(int a, int b): int {
+    if a > b; do return a; fi
+    return b;
+  }
+  pub fnc signum_int(int n): int {
+    if n < 0; do return -1; fi
+    if n > 0; do return 1; fi
+    return 0;
+  }
+  pub fnc contains_closed_int(int n, int lo, int hi): bool {
+    if lo > hi; do return false; fi
+    return n >= lo && n <= hi;
+  }
+end
