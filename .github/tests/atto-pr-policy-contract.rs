@@ -19,12 +19,17 @@ fn block() -> String {
     }
     assert!(!s.contains("fresh post-boundary reviews from all four"));
 }
-#[test] fn ready_cycle_review_lanes() {
+#[test] fn ready_cycle_follows_published_central_policy() {
     let s = block();
-    for required in ["Ready age 0–72h", "Ready age 72–240h", "Ready age ≥240h",
-                     "OpenAI", "Anthropic", "mandatory competing/overlapping-PR audit",
-                     "latest genuine Draft→Ready event", "resets AI freshness"] {
-        assert!(s.contains(required), "ready-cycle policy missing: {required}");
+    for required in ["Ready age", "currently published central single-owner policy",
+                     "no local AI quorum or age-tier override",
+                     "https://github.com/atto-lang/.github/pull/56",
+                     "separate pending amendment, not active policy",
+                     "mandatory competing/overlapping-PR audit"] {
+        assert!(s.contains(required), "central policy missing: {required}");
+    }
+    for stale in ["Ready age 0–72h", "Ready age 72–240h", "Ready age ≥240h"] {
+        assert!(!s.contains(stale), "unadopted age tier: {stale}");
     }
 }
 #[test] fn holds_and_real_ci() {
