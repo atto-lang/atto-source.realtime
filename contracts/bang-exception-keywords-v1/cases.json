@@ -1,0 +1,69 @@
+{
+  "schema": "atto.realtime.exception-bang-staging.v1",
+  "status": "BOOTSTRAP_DESIGN_ONLY",
+  "compiler_supported": false,
+  "guest_evidence": "NOT_EXECUTED",
+  "canonical": [
+    "trap!",
+    "throw!",
+    "raise!",
+    "panic!"
+  ],
+  "migration": [
+    "trap",
+    "throw",
+    "raise",
+    "panic"
+  ],
+  "vectors": [
+    [
+      "trap! x",
+      [
+        "trap!"
+      ]
+    ],
+    [
+      "throw! e; raise! e; panic! e",
+      [
+        "throw!",
+        "raise!",
+        "panic!"
+      ]
+    ],
+    [
+      "trap ! x; throw != x; raise !eq y",
+      [
+        "trap",
+        "throw",
+        "raise"
+      ]
+    ],
+    [
+      "trapped! x; mypanic! e; unraise! e",
+      []
+    ],
+    [
+      "\"panic!\" // throw!\nraise! e",
+      [
+        "raise!"
+      ]
+    ],
+    [
+      "/* trap! */ throw! e",
+      [
+        "throw!"
+      ]
+    ],
+    [
+      "trap!! x; !panic! e",
+      [
+        "trap!",
+        "panic!"
+      ]
+    ],
+    [
+      "take! x; borrow! x; x != y; x !eq y",
+      []
+    ]
+  ]
+}

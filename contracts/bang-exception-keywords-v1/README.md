@@ -1,6 +1,6 @@
-# Draft: canonical bang-suffixed exceptional control (AttoLang)
+# Staged design: canonical bang-suffixed exceptional control (AttoLang)
 
-**Proposal date:** 2026-11-20. **State:** draft, not an executed backend parity claim.
+**Proposal date:** 2026-11-20. **State:** BOOTSTRAP_DESIGN_ONLY; no backend lexer or execution support. Normative authority remains [atto-spec#146](https://github.com/atto-lang/atto-spec/pull/146).
 
 ## Canonical spellings
 
@@ -34,4 +34,6 @@ Repository currently contains no compiler frontend. This is a source-language co
 - Test exact contiguous spellings, space-separated `trap !`/etc., identifiers such as `trapped`, string/comment trivia, and inequality/ownership punctuation collisions.
 - Verify positive parse, negative type/effect diagnostics, `Result` capture identity, panic escalation and supervisor CONTROL routing **only** on backends that genuinely implement these semantics.
 - Separate lexer/parser tests, static source checks, host simulations, and actual AOT/Wasm guest execution. A missing or zero-step execution is **NOT_EXECUTED**, not a pass.
-- Before promotion or merge, reconcile overlapping in-flight feature work (notably `atto-source.rs` #327/#331, `atto-source.llvm` #75, `atto-source.net` #117, `atto-source.wasm` #51, `atto-source.java` #67), and obtain exact-head CI and required independent approvals.
+- Before enabling compiler support, reconcile overlapping in-flight feature work (notably `atto-source.rs` #327/#331, `atto-source.llvm` #75, `atto-source.net` #117, `atto-source.wasm` #51, `atto-source.java` #67), and obtain exact-head CI and required independent approvals.
+
+The companion host reference lexer test exercises lexical boundaries only; it is not the planned Atto parser. Staging this proposal does not enable exceptions, change guest capability metadata, or certify any compiler.
