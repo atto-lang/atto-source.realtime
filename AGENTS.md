@@ -1,7 +1,15 @@
 # Repository AI agent instructions
 
 <!-- org-merge-review-policy:begin -->
-> **Agent/PR governance:** Read [atto-lang's canonical AGENTS.md](https://github.com/atto-lang/.github/blob/main/AGENTS.md). **Drafts:** at 72h of the CURRENT Draft cycle (creation if opened Draft, otherwise latest genuine Ready→Draft), automatically mark Ready if material CI passes on the exact current head and no `keep-as-draft`, `not-ready`, or legacy `keep-draft` label exists; recheck labels and CI before promotion. **The Ready review clock starts at zero upon promotion.** Ready age <72h: Codex/ChatGPT + Claude/Opus + `ORESoftware` + `the1mills` approvals. Ready age 72–240h: one verified independent approval, green CI, no conflicts, and a **mandatory competing/overlapping PR audit**; update current/competing PRs before merging when needed. Ready age ≥240h: fresh post-boundary reviews from all four. A genuine return to Draft ends/resets the Ready cycle. Respect GitHub protections, never manipulate draft state to game age, and inspect [legacy Oreslang counterpart PRs](https://github.com/ores-truffle-oreslang/.github/blob/main/governance/atto-migration-map.json) before duplicating features.
+> **Canonical Atto PR governance:** [atto-lang/.github/AGENTS.md](https://github.com/atto-lang/.github/blob/main/AGENTS.md) is authoritative; this local summary never overrides effective branch protection, security CODEOWNERS, or required material CI.
+>
+> **One persistent human approval per PR:** Exactly one independent GitHub `APPROVED` review from **either** `the1mills` (GitHub ID `2148448`) **OR** `ORESoftware` (GitHub ID `11139560`) fills the human slot. Never require both. No self-approval; verify reviewer ID and active review state. Ordinary commits, rebases and merges from `main` do **not** demand another human approval. Dismissals, revocations, blocking `CHANGES_REQUESTED` and GitHub protections remain effective.
+>
+> **Ready age:** Follow the currently published central single-owner policy at every Ready age; no local AI quorum or age-tier override. [Central proposal #56](https://github.com/atto-lang/.github/pull/56) is a separate pending amendment, not active policy. If adopted centrally, update this summary and its tests to match. The mandatory competing/overlapping-PR audit applies before every merge.
+>
+> **Drafts and holds:** At ≥72 consecutive hours in the current genuine Draft cycle, automatic promotion requires passing exact-head material CI, verified current labels and no hard hold. `keep-as-draft`, `keep-draft` and `not-ready` prevent automatic promotion and automated merging. Never game the draft clock.
+>
+> **Security:** Approval policy text is not merge authorization or permission to export private source. Preserve all actual GitHub rules, CODEOWNERS restrictions, source-security checks and conflict/overlap review. If Actions cannot start, use only an authorized private SHA-verified Git-tree carrier, not cross-organization checkout tokens. Check the [legacy Oreslang migration map](https://github.com/ores-truffle-oreslang/.github/blob/main/governance/atto-migration-map.json) before duplicating features.
 <!-- org-merge-review-policy:end -->
 
 <!-- org-zero-step-ci-recovery:begin -->
