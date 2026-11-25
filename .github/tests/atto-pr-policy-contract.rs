@@ -59,3 +59,19 @@ fn block() -> String {
     }
     assert!(!flow.contains("paths:"), "required policy check cannot be path-skipped");
 }
+
+
+#[test] fn zero_step_recovery_survives_policy_reconciliation() {
+    let source = fs::read_to_string("AGENTS.md").expect("AGENTS.md");
+    let start = "<!-- org-zero-step-ci-recovery:begin -->";
+    let end = "<!-- org-zero-step-ci-recovery:end -->";
+    assert_eq!(source.matches(start).count(), 1);
+    assert_eq!(source.matches(end).count(), 1);
+    assert!(source.find(start).unwrap() < source.find(end).unwrap());
+    assert!(source.contains("NOT_EXECUTED"));
+    assert!(source.contains("NO MIRROR"));
+    let flow = fs::read_to_string(".github/workflows/ci-zero-step-admission-watch.yml").expect("read-only watcher");
+    assert!(flow.contains("ci-zero-step-watcher.yml@e934ffd39781a7642e2bc1a0d9d4fa893e866091"));
+    assert!(flow.contains("actions: read"));
+    assert!(!flow.contains("actions: write"));
+}

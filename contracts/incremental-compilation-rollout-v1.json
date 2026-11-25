@@ -1,0 +1,12 @@
+{
+  "schema": "atto.incremental-compilation-rollout.v1",
+  "repository": "atto-lang/atto-source.realtime",
+  "status": "BOOTSTRAP_DESIGN_ONLY",
+  "implementation_complete": false,
+  "executed_compiler_guest_evidence": false,
+  "source_compiler_owner": "planned-not-yet-executable",
+  "canonical_design": "https://github.com/atto-lang/atto-common-source/pull/133",
+  "default_without_namespace": "separate pinned package plus source-unit file identity",
+  "explicit_namespace": "verified package-qualified namespace spanning multiple source files",
+  "acceptance": "real compiler clean/incremental differential including 2 unnamespaced files"
+}
