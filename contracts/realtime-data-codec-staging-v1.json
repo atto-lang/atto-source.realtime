@@ -1,0 +1,12 @@
+{
+  "schema": "atto.realtime.actor-data-codec-staging.v1",
+  "status": "DESIGN_ONLY_NOT_EXECUTED",
+  "compiler_supported": false,
+  "guest_evidence": "NOT_EXECUTED",
+  "proposed_default": "messagepack",
+  "active_default": null,
+  "supported_codecs": [],
+  "dynamic_loading": false,
+  "implicit_fallback": false,
+  "control_serializable": false
+}
