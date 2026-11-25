@@ -5,7 +5,7 @@ const source=readFileSync(new URL('../core/perf_policy.atto',import.meta.url),'u
 const code=source.replace(/\/\/[^\n]*/g,'');
 const body=(start,end)=>code.split('pub fnc '+start)[1]?.split('pub fnc '+end)[0]??'';
 test('five public pure Atto core policies are independently compiled candidates',()=>{
- assert.match(code,/define module core as/);
+ assert.match(code,/define pub module core as/);
  for(const name of ['perf_valid_probe','perf_should_sample','perf_duration_ns','perf_can_record','perf_next_dropped'])
   assert.match(code,new RegExp('pub fnc '+name+'\\('));
 });

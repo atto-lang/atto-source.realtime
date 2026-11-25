@@ -1,6 +1,6 @@
 // realtime compiler-owned pure core perf policy; offline AOT candidate.
 // No clock, heap, allocation, I/O, imports, runtime JIT or host capabilities.
-define module core as
+define pub module core as
   pub fnc perf_valid_probe(int probe_id): bool {
     return probe_id >= 1 && probe_id <= 2147483647;
   }

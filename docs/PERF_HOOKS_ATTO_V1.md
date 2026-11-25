@@ -53,3 +53,5 @@ runner steps, positive/negative compiled guest fixtures, disabled-path
 allocation/clock evidence, overflow/ownership tests and a linked program-
 specific strict AOT artifact (or closed Wasm module). Use the shared
 versioned contract but keep library source independently maintained.
+
+Staging these sources does not register a runtime probe, enable JIT or expose a linked library. Actual admission remains blocked until the guest gates above pass. Public module declarations follow the static built-in export rules.

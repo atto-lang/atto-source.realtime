@@ -22,3 +22,15 @@ test('static IDs remain portable and unique',()=>{
  const rows=[...ids.matchAll(/return (\d+);/g)].map(x=>Number(x[1]));
  assert.deepEqual(rows,[23,24,25,26,27,28,29]);
 });
+
+
+test('public modules are importable candidates and invalid counters are bounded',()=>{
+ assert.match(perf,/define pub module Perf as/);
+ assert.match(ids,/define pub module PerfIds as/);
+ assert.match(slots,/define pub module perf_trace_slots as/);
+ assert.match(slots,/if dropped < 0; do return 0; fi/);
+ assert.match(slots,/if dropped >= 2147483647; do return 2147483647; fi/);
+ assert.match(slots,/if !should_drop; do return dropped; fi/);
+ const next=(n,drop)=>Math.min(2147483647, Math.max(0,n)+(n>=0&&drop?1:0));
+ for(const [n,drop,want] of [[-1,true,0],[0,false,0],[0,true,1],[2147483646,true,2147483647],[2147483647,true,2147483647]]) assert.equal(next(n,drop),want);
+});
