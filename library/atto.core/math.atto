@@ -1,6 +1,6 @@
 // Real-time target freestanding Atto math candidate, checked signed i64.
 // No dynamic memory, host time, scheduler, OS, floating modes or panic paths.
-define module math as
+define pub module math as
   pub fnc min_int(int a, int b): int {
     if a < b; do return a; fi
     return b;

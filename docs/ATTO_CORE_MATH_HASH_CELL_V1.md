@@ -16,7 +16,7 @@ RT lock, Cell<T> or RefCell<T>.
 The Python test pins exact source Git SHA-1 blobs, rejects obvious host
 dependencies and checks reference vectors. It is source-free and cannot
 establish compiler admission, AOT execution, determinism or cache/timing
-behavior. Future promotion requires a real compiler, target-specific
+behavior. Staging these unregistered source inputs is distinct from enabling a library. Feature admission requires a real compiler, target-specific
 bounded stack/heap, checked overflow, priority inversion testing,
 synthetic worst-case workload timing and exact-head executed guest.
 Guest status NOT_EXECUTED, real-time certification false.

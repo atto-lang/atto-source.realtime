@@ -4,9 +4,9 @@ from pathlib import Path
 import unittest
 ROOT = Path(__file__).resolve().parents[1]
 PINS = {
-  "math": "025410931c8d2bd03d042036b2d3fa1006a5d8ee",
-  "hash": "6ebafd999f44920a628020662a8b5163e576a119",
-  "cell": "30ef700dc973f1af6bda588aa46ae5cdc7ae745b"
+  "math": "f17d67699b620b152da3271bcfc3ada9ee01a1b4",
+  "hash": "168026ec74aaa63736fda110514913f8e6911564",
+  "cell": "42287b5e6307df1ccb7bfa26f3e7eed6dc563b08"
 }
 P = 1000000007
 
@@ -24,10 +24,16 @@ class RealTimeCoreSource(unittest.TestCase):
             code=data.decode("utf8",errors="strict")
             self.assertNotIn(chr(0),code)
             self.assertFalse(code.startswith(chr(0xfeff)))
-            self.assertTrue("define module " + name + " as" in code)
+            self.assertTrue("define pub module " + name + " as" in code)
             for banned in ("java:","dotnet:","import module std",
                            "await ","new Array","process.","stdlib/"):
                 self.assertNotIn(banned,code)
+
+    def test_canonical_guest_imports(self):
+        guest=(ROOT / "contracts/core-math-hash-cell-v1/guest.atto").read_text("utf8")
+        for name in PINS:
+            self.assertIn(f'import module {name} from "atto.core/{name}";', guest)
+        self.assertNotIn("from pkg ", guest)
 
     def test_constant_iteration_source_candidate(self):
         h=(ROOT / "library" / "atto.core" / "hash.atto").read_text("utf8")
