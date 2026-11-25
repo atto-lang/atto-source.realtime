@@ -10,6 +10,7 @@ const src = (path) => readFileSync(resolve(root, path), 'utf8');
 
 test('typed runtime assertions are retained as source', () => {
   const code = src('stdlib/std/assert.atto');
+  assert.match(code, /define pub module assert as/);
   for (const signature of [
     'class AssertionError extends Error',
     'pub fnc true(bool condition): void',
@@ -26,6 +27,7 @@ test('typed runtime assertions are retained as source', () => {
 
 test('test assertion outcomes and integer bounds are nonthrowing', () => {
   const code = src('stdlib/std/test_assert.atto');
+  assert.match(code, /define pub module test_assert as/);
   for (const fragment of [
     'class TestOutcome', 'pub val bool passed;', 'pub val String message;',
     'return new TestOutcome(false, message)',
@@ -44,9 +46,11 @@ test('guest fixtures are present but not claimed as executed', () => {
   const folder = 'tests/fixtures/std-assert-v1/';
   for (const name of ['pass', 'fail-unequal', 'reject-mixed-eq']) {
     assert.ok(src(folder + name + '.atto').includes('NOT_EXECUTED'));
+    assert.ok(src(folder + name + '.atto').includes('import module assert from "atto.std/assert"'));
+    assert.ok(!src(folder + name + '.atto').includes('from pkg '));
   }
   const pass = src(folder + 'pass.atto');
-  assert.ok(pass.includes('import module assert from pkg "std.assert"'));
+  assert.ok(pass.includes('import module assert from "atto.std/assert"'));
   for (const member of ['assert.true(', 'assert.false(', 'assert.equal(', 'assert.not_equal(']) {
     assert.ok(pass.includes(member), member);
   }

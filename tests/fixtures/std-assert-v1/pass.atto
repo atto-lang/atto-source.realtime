@@ -1,5 +1,5 @@
 // EXPECT: hosted/simulation-only guest success; never claim real hardware/hard-RT support. NOT_EXECUTED on realtime.
-import module assert from pkg "std.assert";
+import module assert from "atto.std/assert";
 pub routine main(): void {
   assert.true(true);
   assert.false(false);

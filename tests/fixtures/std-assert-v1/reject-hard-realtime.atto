@@ -1,7 +1,7 @@
 // TARGET_PROFILE_REJECTION: hard real-time.
 // NOT_EXECUTED: reject heap-allocating typed assertion throw until bounded real-time Error ABI is proven.
 // This fixture MUST fail type/admission checks for this target profile.
-import module assert from pkg "std.assert";
+import module assert from "atto.std/assert";
 pub routine main(): void {
   assert.true(false);
   return;

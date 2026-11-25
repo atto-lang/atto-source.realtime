@@ -1,7 +1,7 @@
 // realtime independent atto test-result assertion candidate.
 // Adapter must map this TestOutcome to the backend's atto-test runner.
 // A failed test condition returns data; it does not throw or panic.
-define module test_assert as
+define pub module test_assert as
 
   define pub class TestOutcome as
     pub val bool passed;

@@ -1,7 +1,7 @@
 // realtime compiler-owned hosted std.assert v1 source CANDIDATE.
 // No backend guest pass is claimed until linking/effects/AOT checks execute.
 // This is not the legacy Assert module; failed checks throw guest Error.
-define module assert as
+define pub module assert as
 
   define pub class AssertionError extends Error as
     pub val String message;

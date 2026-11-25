@@ -1,5 +1,5 @@
 // EXPECT: checked guest AssertionError, not panic/abort. NOT_EXECUTED on realtime.
-import module assert from pkg "std.assert";
+import module assert from "atto.std/assert";
 pub routine main(): void {
   assert.equal(42, 43);
   return;
