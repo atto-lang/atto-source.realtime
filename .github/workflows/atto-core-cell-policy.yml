@@ -5,6 +5,9 @@ on:
   pull_request:
     paths:
       - 'library/atto.core/cell.atto'
+      - 'library/atto.core/math.atto'
+      - 'library/atto.core/hash.atto'
+      - 'contracts/core-math-hash-cell-v1/**'
       - 'tests/**core*cell*'
       - '.github/workflows/atto-core-cell-policy.yml'
   workflow_dispatch:
