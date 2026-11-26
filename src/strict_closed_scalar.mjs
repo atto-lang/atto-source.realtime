@@ -66,8 +66,12 @@ export function compileStrictClosedScalar(source){
  // Closed, immutable Option<int> proof only: no runtime tag or Error escapes.
  // The only admitted handler discards the Error; both arms must be pure
  // scalar witnesses (the Ok arm is the exact binder, Err a literal).
- let result;
+ let result,profile='rt-closed-scalar-v0';
  if(eat('val')){
+  for(const n of ['Option','Some','None','Result','Ok','Err','Error'])
+   if(dimensions.has(n)||units.has(n)||types.has(n))unsupported('shadowed checked unwrap prelude');
+  profile='rt-closed-option-unwrap-v0';
+  if(++nodes>NODE_CAP)deny('RT_PROOF_LIMIT','checked unwrap proof budget');
   expect('Option');expect('<');expect('int');expect('>');
   const local=take();
   if(!/^[a-z][a-z_0-9]*$/.test(local??'')||['main','match','trap','return','val','int','on','over','end','fnc','pub','as','define','type','if','else','then','self','unwrap'].includes(local))
@@ -91,5 +95,5 @@ export function compileStrictClosedScalar(source){
  expect(';');expect('}');expect('<eof>');
  const literal=result===MIN?'INT64_MIN':result<0n?'(-INT64_C('+(-result)+'))':'INT64_C('+result+')';
  const c='#include <stdint.h>\nint64_t atto_rt_entry(void) { return '+literal+'; }\n';
- return Object.freeze({c,profile:'rt-closed-scalar-v0',value:result.toString(),proofNodes:nodes,wcetCertified:false});
+ return Object.freeze({c,profile,value:result.toString(),proofNodes:nodes,wcetCertified:false});
 }
