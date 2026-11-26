@@ -37,3 +37,7 @@ Repository currently contains no compiler frontend. This is a source-language co
 - Before enabling compiler support, reconcile overlapping in-flight feature work (notably `atto-source.rs` #327/#331, `atto-source.llvm` #75, `atto-source.net` #117, `atto-source.wasm` #51, `atto-source.java` #67), and obtain exact-head CI and required independent approvals.
 
 The companion host reference lexer test exercises lexical boundaries only; it is not the planned Atto parser. Staging this proposal does not enable exceptions, change guest capability metadata, or certify any compiler.
+
+## Current separator target (atto-spec #244)
+
+The exact shared 176-vector corpus is pinned to spec commit `b6845ec5e022eecaa805e646e894e773d52212fe`, Git blob `09bd72682424d6669134e3ee126cf9a2d8f08da1`. All 16 keyword spellings (including `move!` and `copy!!`) require immediate ASCII whitespace after the complete suffix. Compact spellings, a comment alone, non-ASCII whitespace, and EOF are rejected targets. This supersedes the older lexical examples where incompatible. The corpus gate validates source data only; compiler admission and guest execution remain NOT_EXECUTED. No runtime or exception capability is enabled.
