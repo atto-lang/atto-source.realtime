@@ -46,3 +46,35 @@ test('counted-ready suspension aliases preserve exact-token rejection and valid 
   denied(()=>emitCountedSingle(s+' unsafe','sv'));
  }
 });
+
+
+test('counted-ready aliases preserve native checked arithmetic and lazy branches at O0/O2',async()=>{
+ const {mkdtempSync,writeFileSync,rmSync}=await import('node:fs');
+ const {spawnSync}=await import('node:child_process');
+ const {tmpdir}=await import('node:os');
+ const {join}=await import('node:path');
+ const source=(alias,body,projection='n')=>'pub '+alias+' fnc main(): int { val Channel<int> c = Channel.new<int>(2); writech c, 42; val Array<int> a = await select<int>(1) fair over when readch c: int n -> { return '+projection+'; } end; '+body+' }';
+ const cases=[
+  ['return a[0];','n',0,42],
+  ['return a[0];','9223372036854775807+n',1,-99],
+  ['if a[0] == 42 || 9223372036854775807+1 == 0 then return 42; fi return 0;','n',0,42],
+  ['if a[0] == 0 || 9223372036854775807+1 == 0 then return 42; fi return 0;','n',1,-99],
+ ];
+ const dir=mkdtempSync(join(tmpdir(),'atto-counted-native-'));
+ try{
+  for(const [i,[body,projection,status,value]] of cases.entries()){
+   const c=emitCountedSingle(source('suspends',body,projection),'c');
+   for(const alias of ['susp','⧖','∂']) assert.equal(emitCountedSingle(source(alias,body,projection),'c'),c);
+   const file=join(dir,'case-'+i+'.c');
+   writeFileSync(file,c+'\nint main(void){int64_t result=-99; int status=atto_counted_entry(&result); return status=='+status+' && result=='+value+' && atto_counted_entry(0)==2 ? 0:1;}\n');
+   for(const opt of ['-O0','-O2']){
+    const exe=join(dir,'guest-'+i+'-'+opt.slice(1));
+    const cc=spawnSync('gcc',['-std=c11',opt,'-fsanitize=undefined','-fno-sanitize-recover=undefined',file,'-o',exe],{encoding:'utf8',timeout:15000});
+    assert.equal(cc.status,0,cc.stderr||String(cc.error));
+    const guest=spawnSync(exe,[],{encoding:'utf8',timeout:3000});
+    assert.equal(guest.status,0,guest.stderr||String(guest.error));
+    assert.equal(guest.signal,null);
+   }
+  }
+ }finally{rmSync(dir,{recursive:true,force:true});}
+});
