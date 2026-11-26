@@ -1,0 +1,20 @@
+// Freestanding checked size arithmetic; no allocation, I/O or host imports.
+// Callers supply an explicit nonnegative budget, so no signed overflow occurs.
+pub fnc size_add_fits(int a, int b, int limit) -> bool {
+  if a < 0 || b < 0 || limit < 0 then return false; fi
+  if a > limit then return false; fi
+  return b <= limit - a;
+}
+
+pub fnc size_mul_fits(int a, int b, int limit) -> bool {
+  if a < 0 || b < 0 || limit < 0 then return false; fi
+  if a == 0 || b == 0 then return true; fi
+  return a <= limit / b;
+}
+
+pub fnc clamp_int(int value, int lower, int upper) -> int {
+  // Caller must supply lower <= upper; this function cannot allocate.
+  if value < lower then return lower; fi
+  if value > upper then return upper; fi
+  return value;
+}
