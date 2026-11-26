@@ -1,6 +1,7 @@
 import {openSync,closeSync,fstatSync,readSync,writeFileSync,constants as flags} from 'node:fs';
 import {TextDecoder} from 'node:util';
 import {compileStrictClosedScalar} from '../src/strict_closed_scalar.mjs';
+import {compileClosedBoolean} from '../src/closed_boolean.mjs';
 function readBounded(path){
  const fd=openSync(path,flags.O_RDONLY|flags.O_NOFOLLOW|flags.O_NONBLOCK);
  try{
@@ -11,7 +12,8 @@ function readBounded(path){
  }finally{closeSync(fd);}
 }
 const args=process.argv.slice(2);
-if(args.length!==3||args[0]!=='--verify=strict'){console.error('usage: node bin/atto-rt-compile.mjs --verify=strict INPUT.atto OUTPUT.c');process.exitCode=2;}
+if(args.length!==3||!['--verify=strict','--verify=closed-boolean'].includes(args[0])){console.error('usage: node bin/atto-rt-compile.mjs --verify=strict|--verify=closed-boolean INPUT.atto OUTPUT.c');process.exitCode=2;}
 else try{
- const {c}=compileStrictClosedScalar(readBounded(args[1]));writeFileSync(args[2],c,{flag:'wx'});
+ const compile=args[0]==='--verify=strict'?compileStrictClosedScalar:compileClosedBoolean;
+ const {c}=compile(readBounded(args[1]));writeFileSync(args[2],c,{flag:'wx'});
 }catch(e){console.error(String(e.message));process.exitCode=1;}
