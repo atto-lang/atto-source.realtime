@@ -26,4 +26,4 @@ jobs:
           node-version: '22'
       - run: |
           cc --version
-          node --test tests/strict_closed_scalar.test.mjs tests/checked_unwrap_native.test.mjs tests/checked_debit_closed_profile.test.mjs
+          node --test tests/strict_closed_scalar.test.mjs tests/checked_unwrap_native.test.mjs tests/checked_debit_closed_profile.test.mjs tests/unsafe-g0-admission.test.mjs tests/suspension-alias-counted-profile.test.mjs
