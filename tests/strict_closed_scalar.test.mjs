@@ -8,7 +8,7 @@ test('closed proof values and fail closed arithmetic',()=>{
  }
  for(const e of ['42/0','-9223372036854775808/-1','9223372036854775807+1','43 as Bounded','(9223372036854775807+1)*0'])
   assert.throws(()=>compile(src(e)),e=>e.code==='E_VERIFY_UNPROVEN');
- for(const s of [src('42')+' trailing','pub fnc main() -> int { return 42; }',src('42').replace('return','while 1 { } return'),src('42').replace('return 42','val x=42; return x')])
+ for(const s of [src('42')+' trailing','pub fnc main() -> int { return 42; }',src('42').replace('return','while 1 { } return')])
   assert.throws(()=>compile(s),e=>e.code==='E_VERIFY_UNSUPPORTED');
  assert.throws(()=>compile(src('('.repeat(40)+'1'+')'.repeat(40))),e=>e.code==='RT_PROOF_LIMIT');
 });
@@ -17,6 +17,7 @@ test('eager immutable scalar values and missing initializers',()=>{
  const s=b=>'type Bounded = int where self >= 1 and self <= 42; pub fnc main() -> int { '+b+' }';
  for(const b of ['val int x=40; val y=x+2; return y;','val x: Bounded=42; val y=x; return y;','val int x=0; return x+42;'])
   assert.equal(compile(s(b)).value,'42');
+ assert.equal(compile(s('val x=42; return x;')).value,'42');
  for(const [b,code] of [
   ['val int x; return 42;','E_MISSING_INITIALIZER'],
   ['val x: int; return 42;','E_MISSING_INITIALIZER'],
