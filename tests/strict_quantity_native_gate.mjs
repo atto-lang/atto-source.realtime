@@ -41,11 +41,18 @@ const bad=[
  ['return 42.<Missing>;','E_UNIT_NAME'],
  ['return 1%2;','E_VERIFY_UNSUPPORTED']
 ];
+// Use the same checked callable profile as the exact Forge frontend.
+const header='fnc f(int x) -> int requires x >= 1 requires x <= 42';
+const tail=' pub fnc main() -> int { return f(2); }';
+for(const body of [' { return 84/x; }','\nbegin return 84/x; end',' :: return 84/x; end','\n:: return 84/x; end'])
+ good.push([header+body+tail,42n,true]);
+for(const body of [' begin return 84/x; end',' :: return 84/x; }',' :: return 84/x;',' :: begin return 84/x; end'])
+ bad.push([header+body+tail,'E_SYNTAX',true]);
 try{
  const cpp=join(work,'kernel.cpp'),obj=join(work,'kernel.o'),host=join(work,'host.cpp'),bin=join(work,'guest');
  writeFileSync(host,'#include <cstdint>\n#include <cstdio>\n#include <cinttypes>\nextern "C" std::int64_t atto_realtime_entry() noexcept;\nint main(){std::printf("%" PRId64 "\\n",atto_realtime_entry());}\n');
- for(const [body,expected] of good){
-  const src=source(body),r=run(compiler,[],src);ok(r,body);assert.equal(r.stderr,'');
+ for(const [body,expected,full] of good){
+  const src=full?pre+' '+body:source(body),r=run(compiler,[],src);ok(r,body);assert.equal(r.stderr,'');
   writeFileSync(cpp,r.stdout);
   ok(run(cxx,['-std=c++20','-Wall','-Wextra','-Werror','-O2','-ffreestanding','-fno-exceptions','-fno-rtti','-fno-stack-protector','-c',cpp,'-o',obj]),body+' object');
   const nm=run('nm',['-u',obj]);ok(nm,body+' symbols');assert.equal(nm.stdout.trim(),'',body+' unresolved symbols');
@@ -54,9 +61,10 @@ try{
   const guest=run(bin,[]);ok(guest,body+' guest');assert.equal(guest.stdout,expected.toString()+'\n');assert.equal(guest.stderr,'');
   console.log('RT_NATIVE_KERNEL_PASS '+sha(src)+' '+sha(readFileSync(obj))+' '+expected);
  }
- for(const [body,category] of bad){
-  const r=run(compiler,[],source(body));assert.equal(r.status,2,body);assert.equal(r.stdout,'',body);assert.match(r.stderr,new RegExp('^'+category),body);
-  console.log('RT_STATIC_REJECT '+category+' '+sha(source(body)));
+ for(const [body,category,full] of bad){
+  const src=full?pre+' '+body:source(body);
+  const r=run(compiler,[],src);assert.equal(r.status,2,body);assert.equal(r.stdout,'',body);assert.match(r.stderr,new RegExp('^'+category),body);
+  console.log('RT_STATIC_REJECT '+category+' '+sha(src));
  }
  for(const [src,category] of [['pub fnc main()->int {return 42;}','E_VERIFY_UNSUPPORTED'],['x'.repeat(16385),'E_SOURCE_LIMIT'],['\0','E_SOURCE_NUL']]){
   const r=run(compiler,[],src);assert.equal(r.status,2);assert.equal(r.stdout,'');assert.match(r.stderr,new RegExp('^'+category));
