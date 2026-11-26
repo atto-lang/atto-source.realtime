@@ -7,7 +7,7 @@ function deny(code,detail){const e=new Error(code+': '+detail);e.code=code;throw
 const unsupported=detail=>deny('E_VERIFY_UNSUPPORTED',detail);
 function lex(source){
  if(typeof source!=='string'||Buffer.byteLength(source,'utf8')>SOURCE_CAP)deny('RT_SOURCE_LIMIT','source byte budget');
- const tokens=[];const re=/\s+|[A-Za-z_][A-Za-z_0-9]*|[0-9]+|->|>=|<=|[(){};=:+*\/-]/gy;
+ const tokens=[];const re=/\s+|trap!(?=[ \t\r\n\v\f])|[A-Za-z_][A-Za-z_0-9]*|[0-9]+|->|>=|<=|[(){};=:+*\/.,<>-]/gy;
  let i=0;while(i<source.length){
   re.lastIndex=i;const m=re.exec(source);if(!m)unsupported('unadmitted token at '+i);
   i=re.lastIndex;if(!/^\s+$/.test(m[0]))tokens.push(m[0]);
@@ -35,7 +35,7 @@ export function compileStrictClosedScalar(source){
   if(lo>hi)deny('E_REFINEMENT_BINDING','empty interval');types.set(n,[lo,hi]);
  }
  if(!dimensions.size&&!types.size)unsupported('strict source requires verified declarations');
- expect('pub');expect('fnc');expect('main');expect('(');expect(')');expect('->');expect('int');expect('{');expect('return');
+ expect('pub');expect('fnc');expect('main');expect('(');expect(')');expect('->');expect('int');expect('{');
  const checked=n=>{if(n<MIN||n>MAX)deny('E_VERIFY_UNPROVEN','signed overflow');return n;};
  function atom(depth){
   if(depth>DEPTH_CAP||++nodes>NODE_CAP)deny('RT_PROOF_LIMIT','expression budget');
@@ -63,7 +63,32 @@ export function compileStrictClosedScalar(source){
   }
   return a;
  }
- const result=expr(0,0);expect(';');expect('}');expect('<eof>');
+ // Closed, immutable Option<int> proof only: no runtime tag or Error escapes.
+ // The only admitted handler discards the Error; both arms must be pure
+ // scalar witnesses (the Ok arm is the exact binder, Err a literal).
+ let result;
+ if(eat('val')){
+  expect('Option');expect('<');expect('int');expect('>');
+  const local=take();
+  if(!/^[a-z][a-z_0-9]*$/.test(local??'')||['main','match','trap','return','val','int','on','over','end','fnc','pub','as','define','type','if','else','then','self','unwrap'].includes(local))
+   unsupported('checked unwrap binding identifier');
+  expect('=');
+  let present=false,payload=0n;
+  if(eat('Some')){present=true;expect('(');payload=expr(0,0);expect(')');}
+  else expect('None');
+  expect(';');expect('return');expect('match');expect('<');expect('int');expect('>');
+  if(!eat('trap!'))expect('trap');
+  expect(local);expect('.');expect('unwrap');expect('(');expect(')');expect('over');
+  expect('on');expect('Ok');expect('(');
+  const binder=take();
+  if(!/^[a-z][a-z_0-9]*$/.test(binder??'')||binder===local||['main','match','trap','return','val','int','on','over','end','fnc','pub','as','define','type','if','else','then','self','unwrap'].includes(binder))
+   unsupported('checked unwrap success binder');
+  expect(')');expect(':');expect('int');expect('->');expect(binder);expect(',');
+  expect('on');expect('Err');expect('(');expect(')');expect(':');expect('int');expect('->');
+  const fallback=bound();expect(',');expect('end');
+  result=present?payload:fallback;
+ } else {expect('return');result=expr(0,0);}
+ expect(';');expect('}');expect('<eof>');
  const literal=result===MIN?'INT64_MIN':result<0n?'(-INT64_C('+(-result)+'))':'INT64_C('+result+')';
  const c='#include <stdint.h>\nint64_t atto_rt_entry(void) { return '+literal+'; }\n';
  return Object.freeze({c,profile:'rt-closed-scalar-v0',value:result.toString(),proofNodes:nodes,wcetCertified:false});
