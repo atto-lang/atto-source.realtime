@@ -7,7 +7,7 @@ function deny(code,detail){const e=new Error(code+': '+detail);e.code=code;throw
 const unsupported=detail=>deny('E_VERIFY_UNSUPPORTED',detail);
 function lex(source){
  if(typeof source!=='string'||Buffer.byteLength(source,'utf8')>SOURCE_CAP)deny('RT_SOURCE_LIMIT','source byte budget');
- const tokens=[];const re=/\s+|trap!(?=[ \t\r\n\v\f])|[A-Za-z_][A-Za-z_0-9]*|[0-9]+|->|>=|<=|[(){};=:+*\/.,<>-]/gy;
+ const tokens=[];const re=/\s+|trap!(?=[ \t\r\n\v\f])|\|>|[A-Za-z_][A-Za-z_0-9]*|[0-9]+|->|>=|<=|[(){};=:+*\/.,<>-]/gy;
  let i=0;while(i<source.length){
   re.lastIndex=i;const m=re.exec(source);if(!m)unsupported('unadmitted token at '+i);
   i=re.lastIndex;if(!/^\s+$/.test(m[0]))tokens.push(m[0]);
@@ -30,7 +30,8 @@ export function compileStrictClosedScalar(source){
   else unsupported('only dimension and base unit declarations');
   expect(';');
  }
- while(eat('type')){
+ while(peek()==='type'||peek()==='declare'){
+  eat('declare');expect('type');
   const n=name();unique(n);if(types.size>=32)deny('RT_TOKEN_LIMIT','refinement budget');expect('=');expect('int');expect('where');expect('self');expect('>=');const lo=bound();expect('and');expect('self');expect('<=');const hi=bound();expect(';');
   if(lo>hi)deny('E_REFINEMENT_BINDING','empty interval');types.set(n,[lo,hi]);
  }
@@ -74,18 +75,22 @@ export function compileStrictClosedScalar(source){
   if(++nodes>NODE_CAP)deny('RT_PROOF_LIMIT','checked unwrap proof budget');
   expect('Option');expect('<');expect('int');expect('>');
   const local=take();
-  if(!/^[a-z][a-z_0-9]*$/.test(local??'')||['main','match','trap','return','val','int','on','over','end','fnc','pub','as','define','type','if','else','then','self','unwrap','true','false','let','const','mut','void','bool','string','float','null','none','new','actor','supervisor','state','task','await','suspends','sync','async','throw','raise','panic','defer','recover','try','catch','finally','guard','fi','do','while','for','loop','break','continue','yield','import','namespace','module','class','enum','routine','mtd','private','external','abstract','critical','and','or','not','where','unit','dimension','take','share','copy','move','borrow','pin','drop','pipe','rpipe','select','default','is','eq','neq','using','use','with','maybe','switch','case','this','super','extends','implements','interface','trait','in','of','unless','ifnot','stop','spawn','rt','gen','generator','suspend','channel','receive','init'].includes(local))
+  if(!/^[a-z][a-z_0-9]*$/.test(local??'')||['main','match','trap','return','val','int','on','over','end','fnc','pub','as','define','declare','type','if','else','then','self','unwrap','true','false','let','const','mut','void','bool','string','float','null','none','new','actor','supervisor','state','task','await','suspends','sync','async','throw','raise','panic','defer','recover','try','catch','finally','guard','fi','do','while','for','loop','break','continue','yield','import','namespace','module','class','enum','routine','mtd','private','external','abstract','critical','and','or','not','where','unit','dimension','take','share','copy','move','borrow','pin','drop','pipe','rpipe','select','default','is','eq','neq','using','use','with','maybe','switch','case','this','super','extends','implements','interface','trait','in','of','unless','ifnot','stop','spawn','rt','gen','generator','suspend','channel','receive','init'].includes(local))
    unsupported('checked unwrap binding identifier');
   expect('=');
   let present=false,payload=0n;
   if(eat('Some')){present=true;expect('(');payload=expr(0,0);expect(')');}
   else expect('None');
-  expect(';');expect('return');expect('match');expect('<');expect('int');expect('>');
+  expect(';');expect('return');
+  const prefixMatch=eat('match');
+  if(prefixMatch){expect('<');expect('int');expect('>');}
   if(!eat('trap!'))expect('trap');
-  expect(local);expect('.');expect('unwrap');expect('(');expect(')');expect('over');
+  expect(local);expect('.');expect('unwrap');expect('(');expect(')');
+  if(!prefixMatch){expect('|>');expect('match');expect('<');expect('int');expect('>');}
+  expect('over');
   expect('on');expect('Ok');expect('(');
   const binder=take();
-  if(!/^[a-z][a-z_0-9]*$/.test(binder??'')||binder===local||['main','match','trap','return','val','int','on','over','end','fnc','pub','as','define','type','if','else','then','self','unwrap','true','false','let','const','mut','void','bool','string','float','null','none','new','actor','supervisor','state','task','await','suspends','sync','async','throw','raise','panic','defer','recover','try','catch','finally','guard','fi','do','while','for','loop','break','continue','yield','import','namespace','module','class','enum','routine','mtd','private','external','abstract','critical','and','or','not','where','unit','dimension','take','share','copy','move','borrow','pin','drop','pipe','rpipe','select','default','is','eq','neq','using','use','with','maybe','switch','case','this','super','extends','implements','interface','trait','in','of','unless','ifnot','stop','spawn','rt','gen','generator','suspend','channel','receive','init'].includes(binder))
+  if(!/^[a-z][a-z_0-9]*$/.test(binder??'')||binder===local||['main','match','trap','return','val','int','on','over','end','fnc','pub','as','define','declare','type','if','else','then','self','unwrap','true','false','let','const','mut','void','bool','string','float','null','none','new','actor','supervisor','state','task','await','suspends','sync','async','throw','raise','panic','defer','recover','try','catch','finally','guard','fi','do','while','for','loop','break','continue','yield','import','namespace','module','class','enum','routine','mtd','private','external','abstract','critical','and','or','not','where','unit','dimension','take','share','copy','move','borrow','pin','drop','pipe','rpipe','select','default','is','eq','neq','using','use','with','maybe','switch','case','this','super','extends','implements','interface','trait','in','of','unless','ifnot','stop','spawn','rt','gen','generator','suspend','channel','receive','init'].includes(binder))
    unsupported('checked unwrap success binder');
   expect(')');expect(':');expect('int');expect('->');expect(binder);expect(',');
   expect('on');expect('Err');expect('(');expect(')');expect(':');expect('int');expect('->');
