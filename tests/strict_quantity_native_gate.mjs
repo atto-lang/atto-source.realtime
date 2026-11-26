@@ -48,6 +48,13 @@ for(const body of [' { return 84/x; }','\nbegin return 84/x; end',' :: return 84
  good.push([header+body+tail,42n,true]);
 for(const body of [' begin return 84/x; end',' :: return 84/x; }',' :: return 84/x;',' :: begin return 84/x; end'])
  bad.push([header+body+tail,'E_PARSE_SYNTAX',true]);
+const annotated='@requires(x >= 1)\n@ensures(result <= 84)\nfnc f(int x) -> int requires x <= 42';
+for(const body of [' { return 84/x; }','\nbegin return 84/x; end',' :: return 84/x; end','\n:: return 84/x; end']){
+ good.push([annotated+body+tail,42n,true]);
+ bad.push([annotated+body+tail.replace('f(2)','f(0)'),'E_REFINEMENT_PRECONDITION',true]);
+}
+for(const body of [' begin return 84/x; end',' :: return 84/x; }',' :: return 84/x;',' :: begin return 84/x; end'])
+ bad.push([annotated+body+tail,'E_PARSE_SYNTAX',true]);
 try{
  const cpp=join(work,'kernel.cpp'),obj=join(work,'kernel.o'),host=join(work,'host.cpp'),bin=join(work,'guest');
  writeFileSync(host,'#include <cstdint>\n#include <cstdio>\n#include <cinttypes>\nextern "C" std::int64_t atto_realtime_entry() noexcept;\nint main(){std::printf("%" PRId64 "\\n",atto_realtime_entry());}\n');
