@@ -6,7 +6,7 @@ const SOURCE_CAP=16384,TOKEN_CAP=1024,NODE_CAP=128,DEPTH_CAP=32;
 function deny(code,detail){const e=new Error(code+': '+detail);e.code=code;throw e;}
 const unsupported=detail=>deny('E_VERIFY_UNSUPPORTED',detail);
 function lex(source){
- if(typeof source!=='string'||Buffer.byteLength(source,'utf8')>SOURCE_CAP)deny('RT_SOURCE_LIMIT','source byte budget');
+ if(typeof source!=='string'||source.length>SOURCE_CAP||Buffer.byteLength(source,'utf8')>SOURCE_CAP)deny('RT_SOURCE_LIMIT','source byte budget');
  const tokens=[];const re=/\s+|trap!(?=[ \t\r\n\v\f])|\|>|[A-Za-z_][A-Za-z_0-9]*|[0-9]+|->|>=|<=|[(){}\[\],.;=:+*\/<>-]/gy;
  let i=0;while(i<source.length){
   re.lastIndex=i;const m=re.exec(source);if(!m)unsupported('unadmitted token at '+i);
@@ -23,8 +23,9 @@ export function compileStrictClosedScalar(source){
  const number=(negative=false)=>{const t=take();if(!/^(0|[1-9][0-9]{0,18})$/.test(t??''))unsupported('decimal i64 literal');const n=BigInt(t)*(negative?-1n:1n);if(n<MIN||n>MAX)deny('E_VERIFY_UNPROVEN','literal outside i64');return n;};
  const bound=()=>number(eat('-'));
  const dimensions=new Set(),units=new Map(),types=new Map(),bindings=new Map(),arrays=new Map();
+ const keywords=new Set(['main','match','trap','return','val','int','on','over','end','fnc','pub','as','define','declare','type','if','else','then','self','unwrap','true','false','let','const','mut','void','bool','string','float','null','none','new','actor','supervisor','state','task','await','suspends','sync','async','throw','raise','panic','defer','recover','try','catch','finally','guard','fi','do','while','for','loop','break','continue','yield','import','namespace','module','class','enum','routine','mtd','private','external','abstract','critical','and','or','not','where','unit','dimension','take','share','copy','move','borrow','pin','drop','pipe','rpipe','select','default','is','eq','neq','using','use','with','maybe','switch','case','this','super','extends','implements','interface','trait','in','of','unless','ifnot','stop','spawn','rt','gen','generator','suspend','channel','receive','init','_','Some','None','Ok','Err','Error','Array','Option','Result','Map','Tuple','String','Int','Bool','i64','Box','Vec','Set','Slice','ByteBuffer','AND','OR','XOR','And','Or','Xor','unsafe']);
  const reserved=new Set(['int','i64','bool','void','fnc','main','pub','return','val','let','type','define','dimension','unit','where','self','and','as','if','else','while','break','continue','begin','end','Array','Option','Result','Map','Tuple','Int','Bool','String']);
- const unique=n=>{if(reserved.has(n))unsupported('reserved nominal name');if(dimensions.has(n)||units.has(n)||types.has(n))deny('E_UNIT_DUPLICATE','duplicate declaration');};
+ const unique=n=>{if(reserved.has(n)||keywords.has(n))unsupported('reserved nominal name');if(dimensions.has(n)||units.has(n)||types.has(n))deny('E_UNIT_DUPLICATE','duplicate declaration');};
  while(eat('define')){
   if(eat('dimension')){const n=name();unique(n);if(dimensions.size>=8)deny('RT_TOKEN_LIMIT','dimension budget');dimensions.add(n);}
   else if(eat('unit')){const n=name();unique(n);expect(':');const d=name();if(!dimensions.has(d)||[...units.values()].includes(d))unsupported('base unit declaration');units.set(n,d);}
@@ -80,7 +81,7 @@ export function compileStrictClosedScalar(source){
    if(dimensions.has(n)||units.has(n)||types.has(n))unsupported('shadowed checked unwrap prelude');
   if(++nodes>NODE_CAP)deny('RT_PROOF_LIMIT','checked unwrap proof budget');
   expect('val');expect('Option');expect('<');expect('int');expect('>');
-  const keywords=new Set(['main','match','trap','return','val','int','on','over','end','fnc','pub','as','define','declare','type','if','else','then','self','unwrap','true','false','let','const','mut','void','bool','string','float','null','none','new','actor','supervisor','state','task','await','suspends','sync','async','throw','raise','panic','defer','recover','try','catch','finally','guard','fi','do','while','for','loop','break','continue','yield','import','namespace','module','class','enum','routine','mtd','private','external','abstract','critical','and','or','not','where','unit','dimension','take','share','copy','move','borrow','pin','drop','pipe','rpipe','select','default','is','eq','neq','using','use','with','maybe','switch','case','this','super','extends','implements','interface','trait','in','of','unless','ifnot','stop','spawn','rt','gen','generator','suspend','channel','receive','init']);
+
   const localName=detail=>{const n=take();if(!/^[a-z][a-z_0-9]*$/.test(n??'')||keywords.has(n)||reserved.has(n))unsupported(detail);return n;};
   const local=localName('checked unwrap binding identifier');
   expect('=');
@@ -110,7 +111,7 @@ export function compileStrictClosedScalar(source){
   let n=take(),type=null;
   if(eat(':'))type=take();
   else if(peek()!=='='&&peek()!==';'){type=n;n=take();}
-  if(!/^[a-z_][A-Za-z_0-9]*$/.test(n??'')||reserved.has(n)||bindings.has(n)||arrays.has(n))unsupported('invalid or duplicate immutable binding');
+  if(!/^[a-z_][A-Za-z_0-9]*$/.test(n??'')||keywords.has(n)||reserved.has(n)||dimensions.has(n)||units.has(n)||types.has(n)||bindings.has(n)||arrays.has(n))unsupported('invalid or duplicate immutable binding');
   if(type!==null&&type!=='int'&&type!=='i64'&&!types.has(type))unsupported('only scalar immutable types');
   if(peek()===';')deny('E_MISSING_INITIALIZER','immutable initializer required');
   expect('=');
