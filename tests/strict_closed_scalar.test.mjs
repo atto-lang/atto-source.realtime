@@ -12,3 +12,17 @@ test('closed proof values and fail closed arithmetic',()=>{
   assert.throws(()=>compile(s),e=>e.code==='E_VERIFY_UNSUPPORTED');
  assert.throws(()=>compile(src('('.repeat(40)+'1'+')'.repeat(40))),e=>e.code==='RT_PROOF_LIMIT');
 });
+
+test('eager immutable scalar values and missing initializers',()=>{
+ const s=b=>'type Bounded = int where self >= 1 and self <= 42; pub fnc main() -> int { '+b+' }';
+ for(const b of ['val int x=40; val y=x+2; return y;','val x: Bounded=42; val y=x; return y;','val int x=0; return x+42;'])
+  assert.equal(compile(s(b)).value,'42');
+ for(const [b,code] of [
+  ['val int x; return 42;','E_MISSING_INITIALIZER'],
+  ['val x: int; return 42;','E_MISSING_INITIALIZER'],
+  ['val x=1/0; return 42;','E_VERIFY_UNPROVEN'],
+  ['val Bounded x=43; return 42;','E_VERIFY_UNPROVEN'],
+  ['val x=42; val x=1; return x;','E_VERIFY_UNSUPPORTED'],
+  ['val main=42; return main;','E_VERIFY_UNSUPPORTED']
+ ])assert.throws(()=>compile(s(b)),e=>e.code===code);
+});

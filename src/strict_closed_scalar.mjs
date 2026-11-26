@@ -22,8 +22,9 @@ export function compileStrictClosedScalar(source){
  const name=()=>{const v=take();if(!/^[A-Z][A-Za-z_0-9]*$/.test(v??''))unsupported('nominal identifier');return v;};
  const number=(negative=false)=>{const t=take();if(!/^(0|[1-9][0-9]{0,18})$/.test(t??''))unsupported('decimal i64 literal');const n=BigInt(t)*(negative?-1n:1n);if(n<MIN||n>MAX)deny('E_VERIFY_UNPROVEN','literal outside i64');return n;};
  const bound=()=>number(eat('-'));
- const dimensions=new Set(),units=new Map(),types=new Map();
- const unique=n=>{if(dimensions.has(n)||units.has(n)||types.has(n))deny('E_UNIT_DUPLICATE','duplicate declaration');};
+ const dimensions=new Set(),units=new Map(),types=new Map(),bindings=new Map();
+ const reserved=new Set(['int','i64','bool','void','fnc','main','pub','return','val','let','type','define','dimension','unit','where','self','and','as','if','else','while','break','continue','begin','end','Array','Option','Result','Map','Tuple','Int','Bool','String']);
+ const unique=n=>{if(reserved.has(n))unsupported('reserved nominal name');if(dimensions.has(n)||units.has(n)||types.has(n))deny('E_UNIT_DUPLICATE','duplicate declaration');};
  while(eat('define')){
   if(eat('dimension')){const n=name();unique(n);if(dimensions.size>=8)deny('RT_TOKEN_LIMIT','dimension budget');dimensions.add(n);}
   else if(eat('unit')){const n=name();unique(n);expect(':');const d=name();if(!dimensions.has(d)||[...units.values()].includes(d))unsupported('base unit declaration');units.set(n,d);}
@@ -35,7 +36,7 @@ export function compileStrictClosedScalar(source){
   if(lo>hi)deny('E_REFINEMENT_BINDING','empty interval');types.set(n,[lo,hi]);
  }
  if(!dimensions.size&&!types.size)unsupported('strict source requires verified declarations');
- expect('pub');expect('fnc');expect('main');expect('(');expect(')');expect('->');expect('int');expect('{');expect('return');
+ expect('pub');expect('fnc');expect('main');expect('(');expect(')');expect('->');expect('int');expect('{');
  const checked=n=>{if(n<MIN||n>MAX)deny('E_VERIFY_UNPROVEN','signed overflow');return n;};
  function atom(depth){
   if(depth>DEPTH_CAP||++nodes>NODE_CAP)deny('RT_PROOF_LIMIT','expression budget');
@@ -44,6 +45,7 @@ export function compileStrictClosedScalar(source){
    if(peek()==='9223372036854775808')return number(true);
    return checked(-atom(depth+1));
   }
+  if(bindings.has(peek()))return bindings.get(take());
   return number();
  }
  function expr(min,depth){
@@ -63,7 +65,20 @@ export function compileStrictClosedScalar(source){
   }
   return a;
  }
- const result=expr(0,0);expect(';');expect('}');expect('<eof>');
+ while(eat('val')){
+  if(bindings.size>=32||++nodes>NODE_CAP)deny('RT_PROOF_LIMIT','binding budget');
+  let n=take(),type=null;
+  if(eat(':'))type=take();
+  else if(peek()!=='='&&peek()!==';'){type=n;n=take();}
+  if(!/^[a-z_][A-Za-z_0-9]*$/.test(n??'')||reserved.has(n)||bindings.has(n))unsupported('invalid or duplicate immutable binding');
+  if(type!==null&&type!=='int'&&type!=='i64'&&!types.has(type))unsupported('only scalar immutable types');
+  if(peek()===';')deny('E_MISSING_INITIALIZER','immutable initializer required');
+  expect('=');const v=expr(0,0);expect(';');
+  const interval=types.get(type);
+  if(interval&&(v<interval[0]||v>interval[1]))deny('E_VERIFY_UNPROVEN','immutable refinement');
+  bindings.set(n,v);
+ }
+ expect('return');const result=expr(0,0);expect(';');expect('}');expect('<eof>');
  const literal=result===MIN?'INT64_MIN':result<0n?'(-INT64_C('+(-result)+'))':'INT64_C('+result+')';
  const c='#include <stdint.h>\nint64_t atto_rt_entry(void) { return '+literal+'; }\n';
  return Object.freeze({c,profile:'rt-closed-scalar-v0',value:result.toString(),proofNodes:nodes,wcetCertified:false});
