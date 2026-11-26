@@ -29,3 +29,27 @@ test('checked unwrap rejects wrong receiver, effects, malformed arms and shadowi
   assert.throws(()=>compile(s),e=>['E_VERIFY_UNSUPPORTED','E_VERIFY_UNPROVEN'].includes(e.code),s);
  for(const init of ['Some(42/0)','Some(9223372036854775807+1)','Some(43 as Bounded)'])assert.throws(()=>compile(source(init)),e=>e.code==='E_VERIFY_UNPROVEN');
 });
+
+const pipedSource=(init,fallback='42',trap='trap!')=>'declare '+source(init,fallback,trap).replace('match<int> '+trap+' x.unwrap() over',trap+' x.unwrap() |> match<int>  over');
+test('declared refinement and piped typed match compile to native C',()=>{
+ const dir=mkdtempSync(join(tmpdir(),'atto-rt-piped-unwrap-'));
+ try{
+  const c=join(dir,'guest.c'),exe=join(dir,'guest');
+  for(const [init,fallback,trap,want] of cases){
+   const result=compile(pipedSource(init,fallback,trap));
+   assert.equal(result.value,want);assert.equal(result.c,compile(source(init,fallback,trap)).c);
+   writeFileSync(c,result.c+'#include <stdio.h>\n#include <inttypes.h>\nint main(void){printf("%" PRId64 "\\n",atto_rt_entry());return 0;}\n');
+   for(const optimization of ['-O0','-O2']){
+    const build=spawnSync('cc',['-std=c11','-Wall','-Wextra','-Werror',optimization,c,'-o',exe],{encoding:'utf8',timeout:10000});
+    assert.equal(build.status,0,build.stderr||String(build.error));
+    const run=spawnSync(exe,[],{encoding:'utf8',timeout:10000});
+    assert.equal(run.status,0,run.stderr||String(run.error));assert.equal(run.stdout,want+'\n');
+   }
+  }
+ }finally{rmSync(dir,{recursive:true,force:true});}
+});
+test('piped match and declare type reject malformed, duplicate and unproved inputs',()=>{
+ const s=pipedSource('None');
+ for(const bad of [s.replace('|>','| >'),s.replace('|>','|'),s.replace('match<int>','match<bool>'),s.replace('x.unwrap()','x.unwrap(1)'),s.replace('x.unwrap()','y.unwrap()'),s.replace('on Err():int -> 42,',''),s.replace('-> n,','-> x,'),s.replace('declare type','declare declare type'),s.replace('declare type','declare unit'),s.replace('pub fnc','type Bounded = int where self >= 1 and self <= 42; pub fnc'),s.replace('None','Some(42/0)'),s.replace('-> 42,','-> 42/0,')])
+  assert.throws(()=>compile(bad),e=>['E_VERIFY_UNSUPPORTED','E_VERIFY_UNPROVEN','E_UNIT_DUPLICATE'].includes(e.code),bad);
+});
