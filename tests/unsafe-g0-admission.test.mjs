@@ -32,3 +32,17 @@ test('counted-ready parser and emitter deny unsafe before source lowering', () =
     denied(() => emitCountedSingle(source,'c'));
   }
 });
+
+
+test('counted-ready suspension aliases preserve exact-token rejection and valid names',()=>{
+ const source=spelling=>'pub '+spelling+' fnc main(): int { val Channel<int> unsafe_tools = Channel.new<int>(2); writech unsafe_tools, 42; val Array<int> a = await select<int>(1) fair over when readch unsafe_tools: int n -> { return n; } end; return a[0]; }';
+ const c=emitCountedSingle(source('suspends'),'c'),sv=emitCountedSingle(source('suspends'),'sv');
+ for(const spelling of ['suspends','susp','⧖','∂']){
+  const s=source(spelling);
+  assert.equal(emitCountedSingle(s,'c'),c);
+  assert.equal(emitCountedSingle(s,'sv'),sv);
+  assert.equal(emitCountedSingle(s+' // unsafe','c'),c);
+  denied(()=>parseCountedSingle(s.replaceAll('unsafe_tools','unsafe')));
+  denied(()=>emitCountedSingle(s+' unsafe','sv'));
+ }
+});
