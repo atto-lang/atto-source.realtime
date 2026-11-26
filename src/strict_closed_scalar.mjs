@@ -7,7 +7,7 @@ function deny(code,detail){const e=new Error(code+': '+detail);e.code=code;throw
 const unsupported=detail=>deny('E_VERIFY_UNSUPPORTED',detail);
 function lex(source){
  if(typeof source!=='string'||Buffer.byteLength(source,'utf8')>SOURCE_CAP)deny('RT_SOURCE_LIMIT','source byte budget');
- const tokens=[];const re=/\s+|[A-Za-z_][A-Za-z_0-9]*|[0-9]+|->|>=|<=|[(){}\[\],.;=:+*\/-]/gy;
+ const tokens=[];const re=/\s+|trap!(?=[ \t\r\n\v\f])|\|>|[A-Za-z_][A-Za-z_0-9]*|[0-9]+|->|>=|<=|[(){}\[\],.;=:+*\/<>-]/gy;
  let i=0;while(i<source.length){
   re.lastIndex=i;const m=re.exec(source);if(!m)unsupported('unadmitted token at '+i);
   i=re.lastIndex;if(!/^\s+$/.test(m[0]))tokens.push(m[0]);
@@ -31,7 +31,8 @@ export function compileStrictClosedScalar(source){
   else unsupported('only dimension and base unit declarations');
   expect(';');
  }
- while(eat('type')){
+ while(peek()==='type'||peek()==='declare'){
+  eat('declare');expect('type');
   const n=name();unique(n);if(types.size>=32)deny('RT_TOKEN_LIMIT','refinement budget');expect('=');expect('int');expect('where');expect('self');expect('>=');const lo=bound();expect('and');expect('self');expect('<=');const hi=bound();expect(';');
   if(lo>hi)deny('E_REFINEMENT_BINDING','empty interval');types.set(n,[lo,hi]);
  }
@@ -72,6 +73,38 @@ export function compileStrictClosedScalar(source){
   }
   return a;
  }
+ // Keep the closed Option profile disjoint from ordinary scalar/array bindings.
+ // This is proof-time selection of pure witnesses, not a runtime Error ABI.
+ function closedOption(){
+  for(const n of ['Option','Some','None','Result','Ok','Err','Error'])
+   if(dimensions.has(n)||units.has(n)||types.has(n))unsupported('shadowed checked unwrap prelude');
+  if(++nodes>NODE_CAP)deny('RT_PROOF_LIMIT','checked unwrap proof budget');
+  expect('val');expect('Option');expect('<');expect('int');expect('>');
+  const keywords=new Set(['main','match','trap','return','val','int','on','over','end','fnc','pub','as','define','declare','type','if','else','then','self','unwrap','true','false','let','const','mut','void','bool','string','float','null','none','new','actor','supervisor','state','task','await','suspends','sync','async','throw','raise','panic','defer','recover','try','catch','finally','guard','fi','do','while','for','loop','break','continue','yield','import','namespace','module','class','enum','routine','mtd','private','external','abstract','critical','and','or','not','where','unit','dimension','take','share','copy','move','borrow','pin','drop','pipe','rpipe','select','default','is','eq','neq','using','use','with','maybe','switch','case','this','super','extends','implements','interface','trait','in','of','unless','ifnot','stop','spawn','rt','gen','generator','suspend','channel','receive','init']);
+  const localName=detail=>{const n=take();if(!/^[a-z][a-z_0-9]*$/.test(n??'')||keywords.has(n)||reserved.has(n))unsupported(detail);return n;};
+  const local=localName('checked unwrap binding identifier');
+  expect('=');
+  let present=false,payload=0n;
+  if(eat('Some')){present=true;expect('(');payload=expr(0,0);expect(')');}
+  else expect('None');
+  expect(';');expect('return');
+  const prefixMatch=eat('match');
+  if(prefixMatch){expect('<');expect('int');expect('>');}
+  if(!eat('trap!'))expect('trap');
+  expect(local);expect('.');expect('unwrap');expect('(');expect(')');
+  if(!prefixMatch){expect('|>');expect('match');expect('<');expect('int');expect('>');}
+  expect('over');expect('on');expect('Ok');expect('(');
+  const binder=localName('checked unwrap success binder');
+  if(binder===local)unsupported('checked unwrap success binder');
+  expect(')');expect(':');expect('int');expect('->');expect(binder);expect(',');
+  expect('on');expect('Err');expect('(');expect(')');expect(':');expect('int');expect('->');
+  const fallback=bound();expect(',');expect('end');
+  return present?payload:fallback;
+ }
+ let result,profile='rt-closed-scalar-v0';
+ if(peek()==='val'&&ts[i+1]==='Option'&&ts[i+2]==='<'){
+  profile='rt-closed-option-unwrap-v0';result=closedOption();
+ }else{
  while(eat('val')){
   if(bindings.size+arrays.size>=32||++nodes>NODE_CAP)deny('RT_PROOF_LIMIT','binding budget');
   let n=take(),type=null;
@@ -97,8 +130,10 @@ export function compileStrictClosedScalar(source){
   if(interval&&(v<interval[0]||v>interval[1]))deny('E_VERIFY_UNPROVEN','immutable refinement');
   bindings.set(n,v);
  }
- expect('return');const result=expr(0,0);expect(';');expect('}');expect('<eof>');
+ expect('return');result=expr(0,0);
+ }
+ expect(';');expect('}');expect('<eof>');
  const literal=result===MIN?'INT64_MIN':result<0n?'(-INT64_C('+(-result)+'))':'INT64_C('+result+')';
  const c='#include <stdint.h>\nint64_t atto_rt_entry(void) { return '+literal+'; }\n';
- return Object.freeze({c,profile:'rt-closed-scalar-v0',value:result.toString(),proofNodes:nodes,wcetCertified:false});
+ return Object.freeze({c,profile,value:result.toString(),proofNodes:nodes,wcetCertified:false});
 }
