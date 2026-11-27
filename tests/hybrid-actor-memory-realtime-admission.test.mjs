@@ -28,3 +28,19 @@ test('real-time target pins the same unexecuted .atto positive/negative corpus',
  assert.equal(p.implementation.zero_gc,'NOT_IMPLEMENTED');
  assert.equal(p.implementation.hard_realtime_prefault,'NOT_IMPLEMENTED');
 });
+
+test('realtime actor memory admission is complete and cannot pass with missing capabilities',()=>{
+ const required = [
+   'compiler','aot','runtime','hard_realtime_prefault','worst_case_execution_bound',
+   'zero_gc','actor_private_heap','actor_generation_lease','memory_growth_peak_charge',
+   'actor_transfer_take','frozen_share','compiled_node_graph_positive','compiled_node_graph_negative'
+ ];
+ assert.deepEqual(Object.keys(p.implementation).sort(),required.sort());
+ for(const name of required)
+   assert.equal(p.implementation[name],
+     name.startsWith('compiled_node_graph_')?'NOT_EXECUTED':'NOT_IMPLEMENTED',name);
+ assert.equal(p.contract,'atto.hybrid-actor-memory.v1');
+ assert.equal(p.reference_abi.target,'offset8_plus_one');
+ assert.equal(p.certification,'NOT_CERTIFIED');
+ assert.deepEqual(p.evidence,[]);
+});

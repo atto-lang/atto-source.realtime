@@ -1,0 +1,59 @@
+name: Realtime closed pure Boolean native guest
+on:
+  push:
+    paths:
+      - 'src/closed_boolean.mjs'
+      - 'src/strict_closed_scalar.mjs'
+      - 'bin/atto-rt-compile.mjs'
+      - 'tests/closed_boolean_native.test.mjs'
+      - 'tests/fixtures/boolean-reductions-literal-packs.atto'
+      - '.github/workflows/closed-boolean-native.yml'
+  pull_request:
+    paths:
+      - 'src/closed_boolean.mjs'
+      - 'src/strict_closed_scalar.mjs'
+      - 'bin/atto-rt-compile.mjs'
+      - 'tests/closed_boolean_native.test.mjs'
+      - 'tests/fixtures/boolean-reductions-literal-packs.atto'
+      - '.github/workflows/closed-boolean-native.yml'
+permissions:
+  contents: read
+jobs:
+  native:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Verify source and toolchains
+        env:
+          EXPECTED: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED"
+          git rev-parse HEAD HEAD^{tree}
+          node --version
+          gcc --version
+          clang --version
+      - name: Run actual source-to-C native matrix and strict scalar regressions
+        run: node --test tests/closed_boolean_native.test.mjs tests/strict_closed_scalar.test.mjs
+      - name: Verify opt-in CLI and rejection without artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmp="$(mktemp -d)"
+          trap 'rm -rf "$tmp"' EXIT
+          node bin/atto-rt-compile.mjs --verify=closed-boolean tests/fixtures/boolean-reductions-literal-packs.atto "$tmp/guest.c"
+          printf '#include <stdint.h>\nextern int64_t atto_rt_entry(void);\nint main(void){return atto_rt_entry()==42?0:1;}\n' > "$tmp/driver.c"
+          gcc -std=c11 -Wall -Wextra -Werror "$tmp/guest.c" "$tmp/driver.c" -o "$tmp/guest"
+          "$tmp/guest"
+          printf 'pub fnc main(): int { if And(false,1) then return 1; fi return 42; }\n' > "$tmp/bad.atto"
+          set +e
+          node bin/atto-rt-compile.mjs --verify=closed-boolean "$tmp/bad.atto" "$tmp/bad.c" >"$tmp/stdout" 2>"$tmp/stderr"
+          status=$?
+          set -e
+          test "$status" = 1
+          test ! -e "$tmp/bad.c"
+          test ! -s "$tmp/stdout"
+          grep -q '^E_RT_BOOL_UNSUPPORTED:' "$tmp/stderr"
