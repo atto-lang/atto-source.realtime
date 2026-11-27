@@ -5,7 +5,7 @@ export function parseCountedSingle(source){
  if(typeof source!=='string'||Buffer.byteLength(source,'utf8')>16384||/[^\x20-\x7e\n\r\t⧖∂]/u.test(source))fail('bounded ASCII source required');
  const tokens=[],re=/\s+|\/\/[^\r\n]*|[A-Za-z_][A-Za-z_0-9]*|[0-9]+|⧖|∂|->|==|!=|<=|>=|&&|\|\||[(){}\[\]:;,.+*<>=-]/gy;
  let pos=0;
- while(pos<source.length){re.lastIndex=pos;const m=re.exec(source);if(!m)fail('unadmitted token');pos=re.lastIndex;if(!/^\s|^\/\//.test(m[0]))tokens.push(['susp','⧖','∂'].includes(m[0])?'suspends':m[0]);if(tokens.length>2048)fail('token budget');}
+ while(pos<source.length){re.lastIndex=pos;const m=re.exec(source);if(!m)fail('unadmitted token');pos=re.lastIndex;if(m[0]==='unsafe')throw Object.assign(new Error('E_UNSAFE_UNSUPPORTED: unsafe effects and native grants are unavailable'),{code:'E_UNSAFE_UNSUPPORTED'});if(!/^\s|^\/\//.test(m[0]))tokens.push(['susp','⧖','∂'].includes(m[0])?'suspends':m[0]);if(tokens.length>2048)fail('token budget');}
  tokens.push('<eof>');let i=0,depth=0,nodes=0,channel=null,cap=0,sites=0,pending=null;
  const slots=new Map(),queue=[],locals=[],branches=[];
  const peek=()=>tokens[i],eat=x=>peek()===x?(i++,true):false,need=x=>{if(!eat(x))fail('expected '+x);};

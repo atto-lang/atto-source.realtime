@@ -10,7 +10,7 @@ function lex(source){
  const tokens=[];const re=/\s+|trap!(?=[ \t\r\n\v\f])|\|>|[A-Za-z_][A-Za-z_0-9]*|[0-9]+|->|>=|<=|[(){}\[\],.;=:+*\/<>-]/gy;
  let i=0;while(i<source.length){
   re.lastIndex=i;const m=re.exec(source);if(!m)unsupported('unadmitted token at '+i);
-  i=re.lastIndex;if(!/^\s+$/.test(m[0]))tokens.push(m[0]);
+  i=re.lastIndex;if(m[0]==='unsafe')deny('E_UNSAFE_UNSUPPORTED','unsafe effects and native grants are unavailable');if(!/^\s+$/.test(m[0]))tokens.push(m[0]);
   if(tokens.length>TOKEN_CAP)deny('RT_TOKEN_LIMIT','token budget');
  }
  tokens.push('<eof>');return tokens;

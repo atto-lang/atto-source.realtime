@@ -10,7 +10,7 @@ function lex(source){
  const tokens=[];const re=/[ \t\r\n]+|\/\/[^\r\n]*|[A-Za-z_][A-Za-z_0-9]*|[0-9]+|->|&&|\|\||[!(){}\[\],;:=\-]/gy;
  let i=0;while(i<source.length){
   re.lastIndex=i;const m=re.exec(source);if(!m)deny('token at '+i);
-  i=re.lastIndex;if(!/^[ \t\r\n]|^\/\//.test(m[0]))tokens.push(m[0]);
+  i=re.lastIndex;if(m[0]==='unsafe')throw Object.assign(new Error('E_UNSAFE_UNSUPPORTED: unsafe effects and native grants are unavailable'),{code:'E_UNSAFE_UNSUPPORTED'});if(!/^[ \t\r\n]|^\/\//.test(m[0]))tokens.push(m[0]);
   if(tokens.length>TOKEN_CAP)limit('tokens');
  }
  tokens.push('<eof>');return tokens;

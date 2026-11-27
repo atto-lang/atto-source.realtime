@@ -50,8 +50,9 @@ test('fixed immutable arrays are eager receiver-scoped scalar captures',()=>{
 
 test('closed scalar and fixed array bindings cannot impersonate reserved syntax or nominal types',()=>{
  const s=b=>'type Bounded = int where self >= 1 and self <= 42; pub fnc main() -> int { '+b+' }';
- for(const body of ["val await=Array.of(42); return await[0];","val true=42; return true;","val Some=Array.of(42); return Some[0];","val Bounded=Array.of(42); return Bounded[0];","val int await=42; return await;","val copy=42; return copy;","val _=42; return _;","val unsafe=Array.of(42); return unsafe[0];","val mut=42; return mut;","val borrow=42; return borrow;"])
+ for(const body of ["val await=Array.of(42); return await[0];","val true=42; return true;","val Some=Array.of(42); return Some[0];","val Bounded=Array.of(42); return Bounded[0];","val int await=42; return await;","val copy=42; return copy;","val _=42; return _;","val mut=42; return mut;","val borrow=42; return borrow;"])
   assert.throws(()=>compile(s(body)),e=>e.code==='E_VERIFY_UNSUPPORTED',body);
+ assert.throws(()=>compile(s('val unsafe=Array.of(42); return unsafe[0];')),e=>e.code==='E_UNSAFE_UNSUPPORTED','unsafe reserved before parsing');
  for(const body of ["val a=Array.of(7,42); val i=1; return a[i];","val a=Array.of(40); val b=Array.of(2,9); return a[0]+b[0];","val x=42; return x;","val Option<int> x = Some(42); return match<int> trap! x.unwrap() over on Ok(n):int -> n, on Err():int -> 7, end;"])
   assert.equal(compile(s(body)).value,'42');
 });
